@@ -1,0 +1,49 @@
+# CAD / KiCad
+*.kicad_sch-bak
+*.kicad_pcb-bak
+*.kicad_*autosave*
+*-cache.lib
+fp-info-cache
+*.sch.bak
+*.pcb.bak
+_bak/
+
+# PlatformIO / firmware build artifacts
+.pio/
+.pioenvs
+.piolibdeps
+__pycache__/
+*.pyc
+*.pyo
+*.o
+*.elf
+*.bin
+*.hex
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Simulator outputs
+*.raw
+*.op.raw
+*.log
+*.out
+
+# Large generated files (use Git LFS for PDFs if needed)
+*.pdf
+!**/Referencias_Bibliograficas/*.pdf
+
+# IDE configs
+.vscode/
+.idea/
+*.user
+*.user.local
