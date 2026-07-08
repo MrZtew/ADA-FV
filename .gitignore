@@ -41,6 +41,7 @@ Thumbs.db
 # Large generated files (use Git LFS for PDFs if needed)
 *.pdf
 !**/Referencias_Bibliograficas/*.pdf
+!**/Datasheets/**/*.pdf
 
 # IDE configs
 .vscode/
