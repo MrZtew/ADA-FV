@@ -1,6 +1,13 @@
-# Monitor de Potencia Fotovoltaica con ESP32
+# Sistema de Monitorización Fotovoltaica — Aulas Sostenibles
 
-Repositorio del proyecto de grado para el diseño e implementación de un monitor de potencia fotovoltaica basado en un ESP32 personalizado. El sistema mide tensión y corriente de paneles solares, procesa los datos y los comunica mediante protocolos estándar (Modbus/USB).
+Repositorio del proyecto de grado para el diseño e implementación de un sistema de monitorización de los sistemas fotovoltaicos en las aulas sostenibles de la **Universidad del Magdalena**.
+
+## Infraestructura objetivo
+
+- **3 inversores modernos** (HF2430U80-H) — bancos de baterías **Green Point 25.6V 200AH**
+- **4 inversores** pendientes de sensado
+- **1 inversor** en espera de actualización
+- Vías de comunicación: **serial** (posible software propietario) y **Modbus**
 
 ## Estructura del repositorio
 
@@ -18,12 +25,6 @@ Repositorio del proyecto de grado para el diseño e implementación de un monito
 - PlatformIO + ESP-IDF (firmware)
 - Python 3.x + dependencias (software PC)
 
-## Cómo empezar
-
-1. Clonar el repositorio
-2. Abrir `03_FIRMWARE/monitor_fv/` con PlatformIO
-3. Compilar y subir al ESP32
-
 ## Créditos
 
-Proyecto de grado — Universidad/Institución — Autor
+Proyecto de grado — Universidad del Magdalena — Autor
