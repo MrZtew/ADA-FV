@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ============================================================================
-Servidor web local para el Monitor FV — SRNE HF2430U80-H via ESP32-C3
+Servidor web local para ADA-FV — SRNE HF2430U80-H via ESP32-C3
 ============================================================================
 
 PROPOSITO:
@@ -103,7 +103,7 @@ class Manejador(BaseHTTPRequestHandler):
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Monitor FV - SRNE HF2430U80-H</title>
+<title>ADA-FV - SRNE HF2430U80-H</title>
 <style>
   body {{ background: #fff; font-family: monospace; text-align: center; }}
   h1 {{ font-size: {TAMANIO_TEXTO}; }}
@@ -111,7 +111,7 @@ class Manejador(BaseHTTPRequestHandler):
 </style>
 </head>
 <body>
-<h1>MONITOR FV - SRNE HF2430U80-H</h1>
+<h1>ADA-FV - SRNE HF2430U80-H</h1>
 <div id="datos">Esperando datos...</div>
 <script>
   // Consulta el endpoint /api cada 2 segundos y actualiza la pagina
@@ -153,7 +153,7 @@ def detect_port():
 # ============================================================================
 def main():
     """Punto de entrada: arranca el hilo lector y el servidor web."""
-    ap = argparse.ArgumentParser(description="Servidor web del Monitor FV")
+    ap = argparse.ArgumentParser(description="Servidor web de ADA-FV")
     ap.add_argument("port_serial", nargs="?", default=None,
                     help="Puerto serial del ESP32 (auto-detecta si se omite)")
     args = ap.parse_args()

@@ -190,7 +190,7 @@ def dashboard(stdscr, port, device_id):
         # --- Cabecera con versiones del inversor ---
         F = curses.A_BOLD
         stdscr.addstr(0, 0, "=" * min(w-1, 70), F)
-        stdscr.addstr(1, 0, f"  MONITOR FV - SRNE HF2430U80-H    {now}", F)
+        stdscr.addstr(1, 0, f"  ADA-FV - SRNE HF2430U80-H    {now}", F)
         stdscr.addstr(2, 0, f"  Puerto: {port}  Protocolo: V{proto//100}.{proto%100:02d}  "
                              f"FW: V{fw//100}.{fw%100:02d}  HW: V{hw//100}.{hw%100:02d}", F)
         stdscr.addstr(3, 0, "=" * min(w-1, 70), F)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ============================================================================
-Lector de datos del Monitor FV — SRNE HF2430U80-H via ESP32-C3
+Lector de datos de ADA-FV — SRNE HF2430U80-H via ESP32-C3
 ============================================================================
 
 PROPOSITO:

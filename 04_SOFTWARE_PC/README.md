@@ -1,7 +1,7 @@
-# Software de PC — Monitor FV
+# Software de PC — ADA-FV
 
 Scripts Python para monitorizar el inversor solar SRNE HF2430U80-H
-(proyecto de grado "Monitor FV — Aulas Sostenibles", Universidad del Magdalena).
+(proyecto de grado ADA-FV — Aulas Abiertas Sostenibles, Universidad del Magdalena).
 
 ## Arquitectura
 
@@ -10,7 +10,7 @@ Existen dos vías de lectura de datos:
 1. **Modbus RTU directo desde el PC** — mediante un adaptador USB-RS485
    (CH340/CP2102). Se conecta a los pines 7 (A) y 8 (B) del puerto RJ45
    del inversor.
-2. **A través del ESP32-C3** — el firmware `03_FIRMWARE/monitor_fv/esp32c3_srne_modbus.ino`
+2. **A través del ESP32-C3** — el firmware `03_FIRMWARE/ada_fv/esp32c3_srne_modbus.ino`
    lee el inversor por RS485 y reenvía los datos ya escalados como JSON
    por USB Serial (115200 baud).
 

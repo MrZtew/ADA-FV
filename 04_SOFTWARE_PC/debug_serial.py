@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ============================================================================
-Depurador serial para el Monitor FV — SRNE HF2430U80-H via ESP32-C3
+Depurador serial para ADA-FV — SRNE HF2430U80-H via ESP32-C3
 ============================================================================
 
 PROPOSITO:

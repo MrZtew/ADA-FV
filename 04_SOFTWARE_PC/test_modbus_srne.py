@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Herramienta de prueba de comunicacion Modbus RTU para inversores SRNE HF2430U80-H
-Universidad del Magdalena — Proyecto de Grado: Monitor FV Aulas Sostenibles
+Universidad del Magdalena — Proyecto de Grado: ADA-FV (Arquitectura de Datos para Aulas Fotovoltaicas)
 
 USO:
   python test_modbus_srne.py                     # auto-detect puerto, lectura unica
@@ -353,7 +353,7 @@ def read_all(client, device_id=1):
     output = []
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     output.append(f"═══════════════════════════════════════════════════════════════")
-    output.append(f"  Monitor FV — Prueba Modbus RTU SRNE HF2430U80-H")
+    output.append(f"  ADA-FV — Prueba Modbus RTU SRNE HF2430U80-H")
     output.append(f"  {timestamp}")
     output.append(f"═══════════════════════════════════════════════════════════════\n")
 

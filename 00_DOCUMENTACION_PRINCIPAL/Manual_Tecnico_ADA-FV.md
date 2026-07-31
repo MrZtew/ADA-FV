@@ -1,13 +1,14 @@
-# Manual Tecnico — Monitor FV
+# Manual Tecnico — ADA-FV
 
 Sistema de monitorizacion para inversor SRNE HF2430U80-H vía ESP32-C3 + RS485.
+Proyecto de grado ADA-FV (Arquitectura de Datos para Aulas Fotovoltaicas) — Aulas Abiertas Sostenibles, Universidad del Magdalena.
 
 ---
 
 ## 1. Estructura del Proyecto
 
 ```
-Proyecto_MonitorFV/
+Proyecto_ADA-FV/
 ├── 00_DOCUMENTACION_PRINCIPAL/     ← Anteproyecto, informes, presentaciones
 ├── 01_INVESTIGACION_Y_BASE_CONOCIMIENTO/
 │   ├── Datasheets/                  ← Hojas de datos de componentes
@@ -24,7 +25,7 @@ Proyecto_MonitorFV/
 │   └── Referencias_Bibliograficas/
 ├── 02_DISENO_HARDWARE/             ← Esquematicos, PCB, imagenes
 ├── 03_FIRMWARE/
-│   ├── monitor_fv/
+│   ├── ada_fv/
 │   │   └── esp32c3_srne_modbus.ino ← FIRMWARE PRINCIPAL (ESP32-C3)
 │   └── esphome_reference/          ← Modulos YAML de referencia
 ├── 04_SOFTWARE_PC/
@@ -173,7 +174,7 @@ El script de prueba `test_modbus_srne.py` lee ~150 registros organizados asi:
 
 ```cpp
 /*
-  Monitor FV - SRNE HF2430U80-H  |  ESP32-C3 + modulo RS485 auto-dir
+  ADA-FV - SRNE HF2430U80-H  |  ESP32-C3 + modulo RS485 auto-dir
   Lee registros Modbus RTU del inversor y los envia por Serial USB.
 
   Conexion:
@@ -289,7 +290,7 @@ void setup() {
   Serial.begin(115200);                            // USB Serial (PC)
   delay(500);
   Serial1.begin(MB_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);  // RS485 (inversor)
-  Serial.println("{\"t\":\"init\",\"msg\":\"Monitor FV\"}");
+  Serial.println("{\"t\":\"init\",\"msg\":\"ADA-FV\"}");
 }
 
 void loop() {
@@ -685,7 +686,7 @@ def dashboard(stdscr, port):
         F = curses.A_BOLD
         led = "[X]" if blink else "[ ]"
         stdscr.addstr(0, 0, "=" * min(w-1, 70), F)
-        stdscr.addstr(1, 0, f"  {led}  MONITOR FV - SRNE HF2430U80-H    {now}", F)
+        stdscr.addstr(1, 0, f"  {led}  ADA-FV - SRNE HF2430U80-H    {now}", F)
         stdscr.addstr(2, 0, f"  Puerto: {port}  |  via ESP32-C3", F)
         stdscr.addstr(3, 0, "=" * min(w-1, 70), F)
 
@@ -770,7 +771,7 @@ def reader_thread():
 
 HTML = """<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Monitor FV</title>
+<title>ADA-FV - SRNE HF2430U80-H</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#fff;color:#000;font-family:Arial,sans-serif;padding:30px}
@@ -781,7 +782,7 @@ HTML = """<!DOCTYPE html>
   #led{display:inline-block;width:20px;height:20px;border-radius:50%;margin-right:12px}
   .on{background:#00cc00} .off{background:#ddd}
 </style></head><body>
-<div style="display:flex;align-items:center;gap:10px"><div id="led" class="off"></div><h1>Monitor FV</h1></div>
+<div style="display:flex;align-items:center;gap:10px"><div id="led" class="off"></div><h1>ADA-FV - SRNE HF2430U80-H</h1></div>
 <div id="hora">conectando...</div><div id="datos"></div>
 <script>
 const g=[['PANEL SOLAR',['PV1_V','PV1_I','PV1_P','PV_P']],['BATERIA',['SOC','Vbat','Ibat','Carga']],['CARGA AC',['Inv_V','Inv_I','Load_I','Load_P','Load_VA']],['RED',['Grid_V','Grid_I','Grid_Hz']],['TEMP',['T_DCDC','T_DCAC','T_Trafo','T_Amb']],['ESTADO',['Estado']],['ENERGIA',['PV_hoy','Load_hoy']]];

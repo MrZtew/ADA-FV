@@ -1,6 +1,6 @@
 /*
   ============================================================================
-  MONITOR FV — SRNE HF2430U80-H
+  ADA-FV — SRNE HF2430U80-H
   Firmware para ESP32-C3 + modulo RS485 (auto-direccion)
 
   PROPOSITO:
@@ -184,7 +184,7 @@ void setup() {
   Serial1.begin(MB_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
   // Avisar por USB que el firmware inicio correctamente
-  Serial.println("{\"t\":\"init\",\"msg\":\"Monitor FV encendido\"}");
+  Serial.println("{\"t\":\"init\",\"msg\":\"ADA-FV encendido\"}");
 }
 
 // ============================================================================

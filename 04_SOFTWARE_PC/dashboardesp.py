@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ============================================================================
-Dashboard en terminal (curses) para el Monitor FV — SRNE HF2430U80-H
+Dashboard en terminal (curses) para ADA-FV — SRNE HF2430U80-H
 ============================================================================
 
 PROPOSITO:
@@ -183,7 +183,7 @@ def dashboard(stdscr, port):
         F = curses.A_BOLD               # Atributo negrita
         led = "[X]" if blink else "[ ]" # Indicador de datos recibidos
         stdscr.addstr(0, 0, "=" * min(w-1, 70), F)
-        stdscr.addstr(1, 0, f"  {led}  MONITOR FV - SRNE HF2430U80-H    {now}", F)
+        stdscr.addstr(1, 0, f"  {led}  ADA-FV - SRNE HF2430U80-H    {now}", F)
         stdscr.addstr(2, 0, f"  Puerto: {port}  |  via ESP32-C3", F)
         stdscr.addstr(3, 0, "=" * min(w-1, 70), F)
 

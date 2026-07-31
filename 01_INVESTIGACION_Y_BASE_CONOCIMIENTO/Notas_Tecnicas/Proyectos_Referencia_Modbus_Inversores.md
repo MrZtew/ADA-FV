@@ -1,6 +1,6 @@
 # Proyectos de Referencia — Inversores por Modbus RS485
 
-Proyectos open-source que implementan comunicación Modbus RTU con inversores solares usando ESP32. Sirven como referencia de arquitectura para el MonitorFV.
+Proyectos open-source que implementan comunicación Modbus RTU con inversores solares usando ESP32. Sirven como referencia de arquitectura para el proyecto ADA-FV.
 
 ## Tabla de proyectos
 

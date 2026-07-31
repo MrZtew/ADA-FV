@@ -1,7 +1,7 @@
-# Firmware — Monitor FV
+# Firmware — ADA-FV
 
 Firmware del ESP32-C3 para el monitor de potencia fotovoltaica
-del inversor SRNE HF2430U80-H.
+del inversor SRNE HF2430U80-H (proyecto ADA-FV — Aulas Abiertas Sostenibles).
 
 ## Firmware principal
 

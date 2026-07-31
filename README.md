@@ -1,6 +1,6 @@
-# Sistema de Monitorización Fotovoltaica — Aulas Sostenibles
+# ADA-FV — Arquitectura de Datos para Aulas Fotovoltaicas
 
-Repositorio del proyecto de grado para el diseño e implementación de un sistema de monitorización de los sistemas fotovoltaicos en las aulas sostenibles de la **Universidad del Magdalena**.
+Repositorio del proyecto de grado para el diseño e implementación de un sistema de monitoreo centralizado de los sistemas fotovoltaicos en las **Aulas Abiertas Sostenibles** de la **Universidad del Magdalena**.
 
 ## Infraestructura objetivo
 
@@ -14,14 +14,14 @@ Repositorio del proyecto de grado para el diseño e implementación de un sistem
 - `00_DOCUMENTACION_PRINCIPAL/` — Anteproyecto, informe final, manual técnico y presentaciones
 - `01_INVESTIGACION_Y_BASE_CONOCIMIENTO/` — Datasheets, notas técnicas, referencias y normas
 - `02_DISENO_HARDWARE/` — Esquemáticos, PCB, simulaciones e imágenes
-- `03_FIRMWARE/` — Código fuente del ESP32-C3 (`monitor_fv/esp32c3_srne_modbus.ino`)
+- `03_FIRMWARE/` — Código fuente del ESP32-C3 (`ada_fv/esp32c3_srne_modbus.ino`)
 - `04_SOFTWARE_PC/` — Scripts Python para monitorización y prueba Modbus
 - `05_MEDICIONES_Y_ENSAYOS/` — Datos de validación y pruebas de laboratorio
 - `06_GESTION_DEL_PROYECTO/` — Planificación, presupuesto y bitácora
 
 ## Firmware (ESP32-C3)
 
-`03_FIRMWARE/monitor_fv/esp32c3_srne_modbus.ino` lee los registros Modbus RTU
+`03_FIRMWARE/ada_fv/esp32c3_srne_modbus.ino` lee los registros Modbus RTU
 del inversor SRNE HF2430U80-H (9600 baud, 8N1) mediante un módulo RS485
 auto-dirección y los reenvía como JSON por USB Serial. Ver su README.
 
