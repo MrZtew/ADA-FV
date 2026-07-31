@@ -28,9 +28,12 @@ Basado en: SRNE Solar MODBUS Protocol V2.08 + integración ESPhome de phinix-org
 | 0x001A | Rs485Addr | R | - | 1 | U_WORD |
 | 0x001B | MachModelNum2 | R | - | 1 | U_WORD |
 | 0x001C | RS485ProtocolVersion | R | - | 1 | U_WORD |
+| 0x001E | ManufactureDate_YM | R | - | - | U_WORD | year(hi), month(lo) |
+| 0x001F | ManufactureDate_DH | R | - | - | U_WORD | day(hi), hour(lo) |
 | 0x0020 | ProductAreaCode | R | - | 1 | U_WORD |
 | 0x0021 | CpuBuildTime (20 regs) | R | - | string | - |
 | 0x0035 | ProductSN (20 regs) | R | - | string | - |
+| 0x004A | Cpu2BuildTime (20 regs) | R | - | string | - |
 
 ## P01 — DC Data (0x0100–0x0139)
 
@@ -132,8 +135,31 @@ Basado en: SRNE Solar MODBUS Protocol V2.08 + integración ESPhome de phinix-org
 | 0xF050 | BatChgkWhTotal (2 regs) | R | kWh | 0.1 | U_DWORD |
 | 0xF052 | BatDischgkWhTotal (2 regs) | R | kWh | 0.1 | U_DWORD |
 | 0xF054 | LineChgkWhTotal (2 regs) | R | kWh | 0.1 | U_DWORD |
+| 0xF056 | GenLoadConsumToday | R | kWh | 0.1 | U_WORD |
+| 0xF057 | GenChgkWhToday | R | kWh | 0.1 | U_WORD |
+| 0xF058 | GenLoadConsumTotal (2) | R | kWh | 0.1 | U_DWORD |
+| 0xF05A | GenChgkWhTotal (2) | R | kWh | 0.1 | U_DWORD |
+| 0xF05C | GenWorkTimeToday | R | h | 1 | U_WORD |
+| 0xF05D | GenWorkTimeTotal | R | h | 1 | U_WORD |
+| 0xF05E | HomdLoadConsumTday | R | kWh | 0.1 | U_WORD |
+| 0xF060 | HomdLoadConsumTotal (2) | R | kWh | 0.1 | U_DWORD |
 
 ## P10 — Fault Records (0xF800–0xFA11)
+
+**Nota importante:** El formato de registros de falla depende de la versión del protocolo.
+
+- **V2.08+**: 32 registros de falla, cada uno ocupa 16 registros (F800-F9FF).  
+  El primer registro de cada bloque es el código de falla, seguido de sello de tiempo  
+  (3 regs: año/mes, día/hora, min/seg) y 12 registros de datos capturados.
+  
+  | Dir | Registro | Longitud | Descripción |
+  |-----|----------|----------|-------------|
+  | 0xF800 | FaultRecord0 | 16 regs | Código falla + tiempo + 12 datos |
+  | 0xF810 | FaultRecord1 | 16 regs | (cada 16 regs = 1 falla) |
+  | ... | (hasta 32 registros) | ... | ... |
+  | 0xF9F0 | FaultRecord31 | 16 regs | Último registro |
+
+- **V2.04 y anteriores**: 8 códigos de falla simples en 0xF800–0xF807.
 
 Tabla de códigos de falla en `Referencias_Bibliograficas/MODBUS Protocol for Energy Storage Inverter - Fault Codes Table.csv`.
 
