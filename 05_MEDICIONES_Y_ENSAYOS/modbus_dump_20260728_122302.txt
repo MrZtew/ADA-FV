@@ -1,0 +1,192 @@
+═══════════════════════════════════════════════════════════════
+  Monitor FV — Prueba Modbus RTU SRNE HF2430U80-H
+  2026-07-28 12:22:31
+═══════════════════════════════════════════════════════════════
+
+─── P00 — Product Info (Version, SN, Fabricacion) ───
+  MinorVersion                                  0  
+  MachType                                      4    (All-in-one solar charger inverter)
+  AfciFirmwareVersion                           0  
+  AfciAlgorithmVersion                          0  
+  SoftWareVersion(APP)                        676    (V6.76)
+  BootloaderVersion                           203    (V2.03)
+  HardWareVersion(Control)                    200    (V2.00)
+  HardWareVersion(Power)                        0    (V0.00)
+  Rs485Addr                                     1  
+  MachModelNum2                                23  
+  RS485ProtocolVersion                        107    (V1.07)
+  ProductAreaCode                               0    (Shenzhen)
+
+─── P01 — DC Data: Bateria (SOC, Voltaje, Corriente, Temperatura) ───
+  BatSoc                                      100 %
+  BatVolt                                    27.9 V
+  ChargeCurr                                 -0.1 A
+  DeviceBatTemper                             0.0 °C
+
+─── P01 — DC Data: Paneles PV (V, I, P) ───
+  Pv1Volt                                   129.5 V
+  Pv1Curr                                     1.0 A
+  Pv1ChargePower                              129 W
+  PvTotalPower                                  0 W
+  ChargeState                                   0    (Charge off)
+  ChargePower                                 129 W
+  Pv2Volt                                     0.0 V
+  Pv2Curr                              ---
+  Pv2ChargePower                       ---
+
+─── P01 — DC Data: BMS Bateria ───
+  BatBmsVolt                           ---
+  BatBmsCurr                           ---
+  BatBmsTemp                           ---
+  BatBmsChgLimitVolt                   ---
+  BatBmsChgLimitCurr                   ---
+  BatBmsDchgLimitCurr                  ---
+  BmsAlarmH                            ---
+  BmsAlarmL                            ---
+  BmsProtectH                          ---
+  BmsProtectL                          ---
+  BmsSwVer                             ---
+  BmsHwVer                             ---
+                                       (sin respuesta)
+
+─── P01 — DC Data: PV3-PV6 + Batt2 (extendido) ───
+  Batt2Volt                            ---
+  Batt2Curr                            ---
+  Pv3Volt                              ---
+  Pv3Curr                              ---
+  Pv3Power                             ---
+  Pv4Volt                              ---
+  Pv4Curr                              ---
+  Pv4Power                             ---
+  Pv5Volt                              ---
+  Pv5Curr                              ---
+  Pv5Power                             ---
+  Pv6Volt                              ---
+  Pv6Curr                              ---
+  Pv6Power                             ---
+                                       (sin respuesta)
+
+─── P02 — Inverter Data: Estado, Fallas, Tiempos ───
+  CurrErrReg_0                                  0 (hex)
+  CurrErrReg_1                                  0 (hex)
+  CurrErrReg_2                                  0 (hex)
+  CurrErrReg_3                                  0 (hex)
+  CurrFcode_0                                   0  
+  CurrFcode_1                                   0  
+  CurrFcode_2                                   0  
+  CurrFcode_3                                   0  
+  GridOnRemainTime                              0 s
+  MachineState                                  5    (Inverter operation)
+  PriorityFlag                                  0    (No password)
+
+─── P02 — Inverter Data: Red AC (V, I, F, P) ───
+  BusVoltSum                                376.0 V
+  GridVoltA                                   0.0 V
+  GridCurrA                                   0.0 A
+  GridFreq                                   0.00 Hz
+  InvVoltA                                  119.9 V
+  InvCurrA                                    1.9 A
+  InvFreq                                   59.99 Hz
+  LoadCurrA                                   1.6 A
+  LoadActivePowerA                            165 W
+  LoadApparentPowerA                          191 VA
+  LineChgCurr                                 0.0 A
+  LoadRatioA                                    6 %
+
+─── P02 — Inverter Data: Temperaturas ───
+  Tempera (DC-DC)                            41.7 °C
+  Temperb (DC-AC)                            43.3 °C
+  Temperc (Transformador)                    45.7 °C
+  Temperd (Ambiente)                         50.7 °C
+  Ibuck1 (PV charge)                          0.0 A
+  ParallCurrRms                               1.8 A
+  PBusVolt                             ---
+  NBusVolt                             ---
+
+─── P02 — Inverter Data: Fases B/C (bifasico/trifasico) ───
+  GridVoltB                            ---
+  GridVoltC                            ---
+  InvVoltB                             ---
+  InvVoltC                             ---
+  InvCurrB                             ---
+  InvCurrC                             ---
+  LoadCurrB                            ---
+  LoadCurrC                            ---
+  LoadActivePowerB                     ---
+  LoadActivePowerC                     ---
+  LoadRatioB                           ---
+  LoadRatioC                           ---
+  GridCurrB                            ---
+  GridCurrC                            ---
+  GridActivePowerA                     ---
+  GridActivePowerB                     ---
+  GridActivePowerC                     ---
+  GridApparentPowerA                   ---
+  GridApparentPowerB                   ---
+  GridApparentPowerC                   ---
+  HomeLoadActivePowerA                 ---
+  HomeLoadActivePowerB                 ---
+  HomeLoadActivePowerC                 ---
+                                       (sin respuesta)
+
+─── P09 — Estadisticas de Energia: Hoy y Total ───
+  EnergyStatisticsDay_L                    2151.4 kWh
+  EnergyStatisticsDay_H                     614.4 kWh
+  GeneratEnergyToGridToday                    0.0 kWh
+  BatChgAHToday                                35 Ah
+  BatDischgAHToday                             12 Ah
+  GeneratEnergyToday                          0.9 kWh
+  UsedEnergyToday                             0.5 kWh
+  WorkDaysTotal                                 0 dias
+  InvWorkTimeTotal                          11018 h
+  LineWorkTimeTotal                             0 h
+
+─── P09 — Estadisticas: Ultimos 7 dias (Energia PV) ───
+  PVEnergyDay1                                0.6 kWh
+  PVEnergyDay2                                0.6 kWh
+  PVEnergyDay3                                0.6 kWh
+  PVEnergyDay4                                0.6 kWh
+  PVEnergyDay5                                0.7 kWh
+  PVEnergyDay6                                0.6 kWh
+  PVEnergyDay7                                0.6 kWh
+
+─── P09 — Estadisticas Totales (acumulado historico) ───
+  GridEnergyTotal_L                           0.0 kWh
+  GridEnergyTotal_H                           0.0 kWh
+  BatChgAHTotal_L                           27772 Ah
+  BatChgAHTotal_H                               0 Ah
+  BatDischgAHTotal_L                        13148 Ah
+  BatDischgAHTotal_H                            0 Ah
+  GeneratEnergyTotal_L                      811.7 kWh
+  GeneratEnergyTotal_H                        0.0 kWh
+  UsedEnergyTotal_L                         600.3 kWh
+  UsedEnergyTotal_H                           0.0 kWh
+  BatDischgkWhToday                    ---
+  BatChgkWhTotal_L                     ---
+  BatChgkWhTotal_H                     ---
+  BatDischgkWhTotal_L                  ---
+  BatDischgkWhTotal_H                  ---
+  LineChgkWhTotal_L                    ---
+  LineChgkWhTotal_H                    ---
+  GenLoadConsumToday                   ---
+  GenChgkWhToday                       ---
+  GenWorkTimeToday                     ---
+  GenWorkTimeTotal                     ---
+
+─── P10 — Registro de Fallas (primeras 8 de 32, V2.08+) ───
+  Fault1_code                                   4  
+  Fault2_code                                   4  
+  Fault3_code                                   4  
+  Fault4_code                                   1  
+  Fault5_code                                   4  
+  Fault6_code                                   4  
+  Fault7_code                                   3  
+  Fault8_code                                   4  
+  Fault1_time_YM                            11274  
+  Fault1_time_DH                              523  
+  Fault1_time_MS                                0  
+
+─── Resumen ───
+  Registros leidos OK:  90
+  Registros sin respuesta: 64
+  Total: 154
