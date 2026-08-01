@@ -22,7 +22,6 @@ Existen dos vías de lectura de datos:
 | `dashboard_srne.py` | Modbus directo | Dashboard en terminal (curses) con los registros críticos en tiempo real |
 | `dashboardesp.py` | ESP32-C3 | Dashboard en terminal (curses) con el JSON del ESP32 |
 | `reader_srne.py` | ESP32-C3 | Lector del JSON del ESP32 con opción de guardar CSV o log |
-| `serverweb_srne.py` | ESP32-C3 | Servidor web local en `http://localhost:8080` (fondo blanco, texto grande) |
 | `debug_serial.py` | ESP32-C3 | Volcado del JSON crudo del ESP32 para depuración |
 
 ## Instalación
@@ -42,9 +41,6 @@ python3 dashboard_srne.py /dev/ttyUSB0
 
 # Dashboard leyendo el ESP32-C3
 python3 dashboardesp.py /dev/ttyUSB0
-
-# Servidor web con los datos del ESP32
-python3 serverweb_srne.py
 ```
 
 ## Convenciones de datos (registros SRNE)

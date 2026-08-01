@@ -35,7 +35,6 @@ Scripts en `04_SOFTWARE_PC/`:
 | `dashboard_srne.py` | Dashboard en terminal leyendo Modbus directamente desde el PC |
 | `dashboardesp.py` | Dashboard en terminal leyendo el JSON del ESP32-C3 |
 | `reader_srne.py` | Lector del JSON del ESP32-C3 con opción CSV/log |
-| `serverweb_srne.py` | Servidor web local (localhost:8080) con los datos en vivo |
 | `debug_serial.py` | Muestra el JSON crudo del ESP32-C3 para depuración |
 
 ## Requisitos mínimos

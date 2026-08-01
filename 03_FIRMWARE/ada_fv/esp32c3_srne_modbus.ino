@@ -23,7 +23,7 @@
         |
         | USB-UART a 115200 baud
         v
-    PC (dashboardesp.py / serverweb_srne.py / reader_srne.py)
+    PC (dashboardesp.py / reader_srne.py)
 
   FORMATO DE SALIDA (USB Serial, 115200 baud):
     {"t":"data","ms":1234,"samples":{"SOC":100,"Vbat":27.9,...}}

@@ -30,7 +30,7 @@ del inversor SRNE HF2430U80-H (proyecto ADA-FV — Aulas Abiertas Sostenibles).
 ## Software de PC
 
 Los scripts para leer, mostrar y registrar estos datos están en
-`04_SOFTWARE_PC/` (dashboardesp.py, reader_srne.py, serverweb_srne.py,
+`04_SOFTWARE_PC/` (dashboardesp.py, reader_srne.py,
 debug_serial.py).
 
 ## Referencias
