@@ -9,35 +9,34 @@ Proyecto de grado ADA-FV (Arquitectura de Datos para Aulas Fotovoltaicas) — Au
 
 ```
 Proyecto_ADA-FV/
-├── 00_DOCUMENTACION_PRINCIPAL/     ← Anteproyecto, informes, presentaciones
+├── README.md                        ← Portada del repositorio
+├── 00_DOCUMENTACION_PRINCIPAL/      ← Manual técnico (anteproyecto/informe cuando existan)
+│   └── Manual_Tecnico_ADA-FV.md     ← MANUAL COMPLETO (este documento)
 ├── 01_INVESTIGACION_Y_BASE_CONOCIMIENTO/
-│   ├── Datasheets/                  ← Hojas de datos de componentes
-│   ├── Normas_y_Estandares/         ← Normas aplicables
+│   ├── Datasheets/
+│   │   ├── Baterias/                ← Green Point 25.6V 200AH
+│   │   └── Inversores/              ← SRNE HF2430U80-H
 │   ├── Notas_Tecnicas/
-│   │   ├── ADC_ESP32.md
-│   │   ├── Aislamiento_Galvanico.md
-│   │   ├── Comparativa_Shunt_vs_Hall.md
-│   │   ├── Protocolos_Modbus_USB.md
 │   │   ├── Protocolo_Modbus_SRNE.md
 │   │   ├── Proyectos_Referencia_Modbus_Inversores.md
 │   │   ├── SRNE_Modbus_Entities.md
 │   │   └── SRNE_Modbus_Register_Map.md  ← Mapa completo de registros
 │   └── Referencias_Bibliograficas/
-├── 02_DISENO_HARDWARE/             ← Esquematicos, PCB, imagenes
 ├── 03_FIRMWARE/
-│   ├── ada_fv/
-│   │   └── esp32c3_srne_modbus.ino ← FIRMWARE PRINCIPAL (ESP32-C3)
-│   └── esphome_reference/          ← Modulos YAML de referencia
+│   └── ada_fv/
+│       ├── esp32c3_srne_modbus.ino  ← FIRMWARE PRINCIPAL (ESP32-C3)
+│       ├── platformio.ini
+│       ├── README.md
+│       └── esphome_reference/       ← Modulos YAML de referencia
 ├── 04_SOFTWARE_PC/
-│   ├── test_modbus_srne.py         ← Prueba de comunicacion Modbus (lectura completa)
-│   ├── dashboard_srne.py           ← Dashboard curses (Modbus directo desde PC)
-│   ├── dashboardesp.py             ← Dashboard curses (lee JSON del ESP32 por serial)
-│   ├── reader_srne.py              ← Lector serial JSON + log CSV
-│   ├── serverweb_srne.py           ← Servidor web local (serial → pagina web)
-│   └── debug_serial.py             ← Debug: muestra raw del serial
-├── 05_MEDICIONES_Y_ENSAYOS/        ← Datos de pruebas
-├── 06_GESTION_DEL_PROYECTO/        ← Planificacion, presupuesto, bitacora
-└── README.md
+│   ├── README.md
+│   ├── test_modbus_srne.py          ← Prueba de comunicacion Modbus (lectura completa)
+│   ├── dashboard_srne.py            ← Dashboard curses (Modbus directo desde PC)
+│   ├── dashboardesp.py              ← Dashboard curses (lee JSON del ESP32 por serial)
+│   ├── reader_srne.py               ← Lector serial JSON + log CSV
+│   ├── serverweb_srne.py            ← Servidor web local (serial → pagina web)
+│   └── debug_serial.py              ← Debug: muestra raw del serial
+└── 05_MEDICIONES_Y_ENSAYOS/         ← Dumps Modbus reales de validacion
 ```
 
 ---
@@ -174,154 +173,235 @@ El script de prueba `test_modbus_srne.py` lee ~150 registros organizados asi:
 
 ```cpp
 /*
-  ADA-FV - SRNE HF2430U80-H  |  ESP32-C3 + modulo RS485 auto-dir
-  Lee registros Modbus RTU del inversor y los envia por Serial USB.
+  ============================================================================
+  ADA-FV — SRNE HF2430U80-H
+  Firmware para ESP32-C3 + modulo RS485 (auto-direccion)
 
-  Conexion:
-    ESP32-C3          Modulo RS485
-    GPIO6 (TX)   ---  TX
-    GPIO7 (RX)   ---  RX
-    3.3V              VCC
-    GND               GND
-    A --- RJ45 pin 7 (RS485-A)
-    B --- RJ45 pin 8 (RS485-B)
+  PROPOSITO:
+    Leer los registros Modbus RTU del inversor solar SRNE HF2430U80-H y
+    reenviar los valores (ya escalados) como JSON por el USB Serial hacia
+    una PC, donde un script Python los muestra o guarda.
+
+  TOPOLOGIA DE COMUNICACION:
+    Inversor (esclavo Modbus, addr 0x01, 9600 8N1)
+        |
+        | RS485 — RJ45 pin 7 (A), pin 8 (B)
+        |
+    Modulo RS485 (TX/RX/VCC/GND) — auto-direccion, no requiere DE/RE
+        |
+    ESP32-C3
+        |-- GPIO6 = TX1  --> modulo TX
+        |-- GPIO7 = RX1  --> modulo RX
+        |-- 3.3V  --> VCC
+        |-- GND   --> GND
+        |
+        | USB-UART a 115200 baud
+        v
+    PC (dashboardesp.py / serverweb_srne.py / reader_srne.py)
+
+  FORMATO DE SALIDA (USB Serial, 115200 baud):
+    {"t":"data","ms":1234,"samples":{"SOC":100,"Vbat":27.9,...}}
+
+  NOTA SOBRE EL MODULO RS485 AUTO-DIR:
+    Estos modulos conmutan automaticamente entre TX y RX segun la
+    actividad del bus. Por eso NO se necesita un pin GPIO de control
+    (DE/RE). Solo se conectan TX, RX, VCC y GND.
+  ============================================================================
 */
 
 #include <Arduino.h>
 
-#define PIN_TX      6
-#define PIN_RX      7
+// ============================================================================
+// DEFINICION DE PINES
+// ============================================================================
+#define PIN_TX      6   // GPIO6  -> TX del modulo RS485 (Serial1 TX)
+#define PIN_RX      7   // GPIO7  -> RX del modulo RS485 (Serial1 RX)
 
-#define MB_SLAVE    1
-#define MB_BAUD     9600
-#define MB_TIMEOUT  100
+// ============================================================================
+// PARAMETROS MODBUS
+// ============================================================================
+#define MB_SLAVE    1   // Direccion Modbus del inversor (default 0x01)
+#define MB_BAUD     9600 // Baud rate del bus RS485 del inversor
+#define MB_TIMEOUT  100  // Tiempo maximo (ms) de espera de respuesta del inversor
 
+// ============================================================================
+// TABLA DE REGISTROS A LEER
+// ============================================================================
+// Cada entrada define:
+//   addr      : direccion Modbus (hex) del holding register
+//   name      : nombre clave con el que sale en el JSON
+//   factor    : multiplicador para convertir el valor crudo a unidad real
+//   is_signed : true si el registro es con signo (S_WORD, complemento a 2)
+//
+// Ejemplo: Vbat crudo = 279  ->  279 * 0.1 = 27.9 V
 struct RegInfo {
-  uint16_t addr;
-  const char* name;
-  float factor;
-  bool is_signed;
+  uint16_t addr;        // Direccion del registro
+  const char* name;     // Nombre en el JSON de salida
+  float factor;         // Factor de escala
+  bool is_signed;       // Tipo signed/unsigned
 };
 
+// Tabla de los 25 registros mas importantes para el monitoreo
 static const RegInfo REGS[] = {
-  {0x0100, "SOC",       1.0,   false},
-  {0x0101, "Vbat",      0.1,   false},
-  {0x0102, "Ibat",      0.1,   true},
-  {0x0107, "PV1_V",     0.1,   false},
-  {0x0108, "PV1_I",     0.1,   false},
-  {0x0109, "PV1_P",     1.0,   false},
-  {0x010A, "PV_P",      1.0,   false},
-  {0x010B, "Carga",     1.0,   false},
-  {0x010E, "Chg_P",     1.0,   false},
-  {0x0210, "Estado",    1.0,   false},
-  {0x0213, "Grid_V",    0.1,   false},
-  {0x0214, "Grid_I",    0.1,   false},
-  {0x0215, "Grid_Hz",   0.01,  false},
-  {0x0216, "Inv_V",     0.1,   false},
-  {0x0217, "Inv_I",     0.1,   false},
-  {0x0218, "Inv_Hz",    0.01,  false},
-  {0x0219, "Load_I",    0.1,   false},
-  {0x021B, "Load_P",    1.0,   false},
-  {0x021C, "Load_VA",   1.0,   false},
-  {0x0220, "T_DCDC",    0.1,   true},
-  {0x0221, "T_DCAC",    0.1,   true},
-  {0x0222, "T_Trafo",   0.1,   true},
-  {0x0223, "T_Amb",     0.1,   true},
-  {0xF02F, "PV_hoy",    0.1,   false},
-  {0xF030, "Load_hoy",  0.1,   false},
+  // --- Bateria (P01) ---
+  {0x0100, "SOC",       1.0,   false},  // Estado de carga de la bateria [%]
+  {0x0101, "Vbat",      0.1,   false},  // Voltaje de bateria [V]
+  {0x0102, "Ibat",      0.1,   true},   // Corriente de bateria [A] (+descarga/-carga)
+  // --- Panel solar (P01) ---
+  {0x0107, "PV1_V",     0.1,   false},  // Voltaje del panel PV1 [V]
+  {0x0108, "PV1_I",     0.1,   false},  // Corriente del panel PV1 [A]
+  {0x0109, "PV1_P",     1.0,   false},  // Potencia del panel PV1 [W]
+  {0x010A, "PV_P",      1.0,   false},  // Potencia total PV [W]
+  {0x010B, "Carga",     1.0,   false},  // Estado de carga (codigo, ver tabla)
+  {0x010E, "Chg_P",     1.0,   false},  // Potencia de carga de bateria [W]
+  // --- Inversor (P02) ---
+  {0x0210, "Estado",    1.0,   false},  // Estado de la maquina (codigo)
+  {0x0213, "Grid_V",    0.1,   false},  // Voltaje de red [V]
+  {0x0214, "Grid_I",    0.1,   false},  // Corriente de red [A]
+  {0x0215, "Grid_Hz",   0.01,  false},  // Frecuencia de red [Hz]
+  {0x0216, "Inv_V",     0.1,   false},  // Voltaje del inversor [V]
+  {0x0217, "Inv_I",     0.1,   false},  // Corriente del inversor [A]
+  {0x0218, "Inv_Hz",    0.01,  false},  // Frecuencia del inversor [Hz]
+  {0x0219, "Load_I",    0.1,   false},  // Corriente de carga [A]
+  {0x021B, "Load_P",    1.0,   false},  // Potencia activa de carga [W]
+  {0x021C, "Load_VA",   1.0,   false},  // Potencia aparente de carga [VA]
+  // --- Temperaturas (P02) ---
+  {0x0220, "T_DCDC",    0.1,   true},   // Temp. del convertidor DC-DC [C]
+  {0x0221, "T_DCAC",    0.1,   true},   // Temp. del convertidor DC-AC [C]
+  {0x0222, "T_Trafo",   0.1,   true},   // Temp. del transformador [C]
+  {0x0223, "T_Amb",     0.1,   true},   // Temp. ambiente [C]
+  // --- Estadisticas de energia (P09) ---
+  {0xF02F, "PV_hoy",    0.1,   false},  // Energia PV generada hoy [kWh]
+  {0xF030, "Load_hoy",  0.1,   false},  // Energia consumida hoy [kWh]
 };
 
+// Numero de registros en la tabla (se calcula solo)
 static const int N_REGS = sizeof(REGS) / sizeof(REGS[0]);
 
-// CRC16 Modbus
+// ============================================================================
+// CRC-16 MODBUS
+// ============================================================================
+// Calcula el CRC de 16 bits (polinomio 0xA001) usado por el protocolo Modbus
+// RTU. El CRC viaja al final de cada trama, byte bajo primero.
+//   data : apuntador a la trama
+//   len  : cantidad de bytes de la trama (sin incluir el CRC)
 static uint16_t crc16_modbus(const uint8_t* data, size_t len) {
-  uint16_t crc = 0xFFFF;
-  for (size_t i = 0; i < len; i++) {
-    crc ^= data[i];
-    for (int b = 0; b < 8; b++) {
-      if (crc & 1) crc = (crc >> 1) ^ 0xA001;
-      else         crc >>= 1;
+  uint16_t crc = 0xFFFF;              // Valor inicial estandar
+  for (size_t i = 0; i < len; i++) {  // Recorrer cada byte de la trama
+    crc ^= data[i];                   // XOR con el byte actual
+    for (int b = 0; b < 8; b++) {     // 8 desplazamientos por byte
+      if (crc & 1) crc = (crc >> 1) ^ 0xA001;  // Si bit menos significativo=1
+      else         crc >>= 1;                   // Si no, solo desplazar
     }
   }
   return crc;
 }
 
-// Lectura de 1 holding register via Modbus RTU
+// ============================================================================
+// LECTURA DE 1 HOLDING REGISTER (Funcion Modbus 0x03)
+// ============================================================================
+// Envia la trama de lectura al inversor y espera la respuesta.
+// Valida: direccion del esclavo, codigo de funcion y CRC.
+//   addr  : direccion del registro a leer
+//   value : puntero donde se devuelve el valor crudo de 16 bits
+//   Retorna: true si la lectura fue exitosa, false si hubo error
 static bool read_holding_reg(uint16_t addr, uint16_t* value) {
-  uint8_t req[8];
-  req[0] = MB_SLAVE;             // Direccion esclavo
-  req[1] = 0x03;                 // Funcion: Read Holding Registers
-  req[2] = addr >> 8;            // Direccion del registro (high byte)
-  req[3] = addr & 0xFF;          // (low byte)
-  req[4] = 0x00;                 // Cantidad (high byte)
-  req[5] = 0x01;                 // Cantidad: 1 registro
-  uint16_t crc = crc16_modbus(req, 6);
-  req[6] = crc & 0xFF;           // CRC (low byte)
-  req[7] = crc >> 8;             // CRC (high byte)
+  uint8_t req[8];                     // Trama de peticion: 8 bytes
+  req[0] = MB_SLAVE;                  // 1) Direccion del esclavo (0x01)
+  req[1] = 0x03;                      // 2) Funcion: Read Holding Registers
+  req[2] = addr >> 8;                 // 3) Direccion del registro (byte alto)
+  req[3] = addr & 0xFF;               // 4) Direccion del registro (byte bajo)
+  req[4] = 0x00;                      // 5) Cantidad de registros (byte alto)
+  req[5] = 0x01;                      // 6) Cantidad de registros: 1
+  uint16_t crc = crc16_modbus(req, 6);// Calcular CRC de los 6 primeros bytes
+  req[6] = crc & 0xFF;                // 7) CRC (byte bajo)
+  req[7] = crc >> 8;                  // 8) CRC (byte alto)
 
-  Serial1.write(req, 8);         // Enviar trama
-  Serial1.flush();
+  Serial1.write(req, 8);              // Enviar la trama por el bus RS485
+  Serial1.flush();                    // Asegurar que se transmita completa
 
-  // Esperar respuesta
-  unsigned long t0 = millis();
-  size_t idx = 0;
-  uint8_t resp[32];
+  // Esperar la respuesta del inversor dentro del tiempo maximo (MB_TIMEOUT)
+  unsigned long t0 = millis();        // Marca de tiempo de inicio
+  size_t idx = 0;                     // Contador de bytes recibidos
+  uint8_t resp[32];                   // Buffer de respuesta
 
   while (millis() - t0 < MB_TIMEOUT) {
-    if (Serial1.available()) {
-      resp[idx++] = Serial1.read();
+    if (Serial1.available()) {        // Si llego un byte del inversor
+      resp[idx++] = Serial1.read();   // Guardarlo en el buffer
+      // Trama esperada: addr + func + bytecount + datos + CRC(2) = resp[2]+5
       if (idx >= 3 && idx == (size_t)(resp[2] + 5)) break;
     }
   }
 
-  // Validar respuesta
-  if (idx < 5) return false;                      // Sin respuesta
-  if (resp[0] != MB_SLAVE) return false;           // Direccion incorrecta
-  if (resp[1] != 0x03) return false;               // Funcion incorrecta
+  // --- Validaciones de la respuesta ---
+  if (idx < 5) return false;          // Respuesta demasiado corta (sin datos)
+  if (resp[0] != MB_SLAVE) return false;  // Direccion no coincide
+  if (resp[1] != 0x03) return false;      // Funcion no coincide
 
+  // Verificar CRC recibido contra el calculado
   uint16_t rx_crc = resp[idx-2] | (resp[idx-1] << 8);
-  if (crc16_modbus(resp, idx-2) != rx_crc) return false;  // CRC malo
+  if (crc16_modbus(resp, idx-2) != rx_crc) return false;  // CRC invalido
 
-  *value = (resp[3] << 8) | resp[4];              // Valor leido
-  return true;
+  *value = (resp[3] << 8) | resp[4];  // Los 2 bytes de datos del registro
+  return true;                        // Lectura exitosa
 }
 
+// ============================================================================
+// CONFIGURACION INICIAL (setup)
+// ============================================================================
 void setup() {
-  Serial.begin(115200);                            // USB Serial (PC)
-  delay(500);
-  Serial1.begin(MB_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);  // RS485 (inversor)
-  Serial.println("{\"t\":\"init\",\"msg\":\"ADA-FV\"}");
+  // Serial USB hacia la PC (para enviar el JSON) — 115200 baud
+  Serial.begin(115200);
+  delay(500);                         // Esperar a que la PC abra el puerto
+
+  // Serial1 hacia el modulo RS485 / inversor — 9600 8N1 (estandar SRNE)
+  Serial1.begin(MB_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
+
+  // Avisar por USB que el firmware inicio correctamente
+  Serial.println("{\"t\":\"init\",\"msg\":\"ADA-FV encendido\"}");
 }
 
+// ============================================================================
+// BUCLE PRINCIPAL (loop)
+// ============================================================================
+// En cada ciclo lee TODOS los registros de la tabla y genera un JSON que
+// envia por USB. Al final espera 200 ms (~5 lecturas por segundo).
 void loop() {
+  // Cabecera del JSON: tipo "data" y tiempo de ejecucion (millis)
   Serial.print("{\"t\":\"data\",\"ms\":");
   Serial.print(millis());
   Serial.print(",\"samples\":{");
 
-  bool first = true;
+  // Recorrer todos los registros definidos en la tabla REGS[]
+  bool first = true;                  // Control para el separador de coma
   for (int i = 0; i < N_REGS; i++) {
-    uint16_t raw = 0;
+    uint16_t raw = 0;                 // Valor crudo leido del inversor
     bool ok = read_holding_reg(REGS[i].addr, &raw);
 
+    // Separador "," entre elementos del JSON (excepto el primero)
     if (!first) Serial.print(",");
     first = false;
 
+    // Nombre del campo JSON
     Serial.print("\"");
     Serial.print(REGS[i].name);
     Serial.print("\":");
 
     if (!ok) {
+      // No hubo respuesta del inversor: campo null
       Serial.print("null");
     } else {
+      // Escalar el valor: si es signed se interpreta como int16 con signo
       float val = REGS[i].is_signed
         ? (float)(int16_t)raw * REGS[i].factor
         : (float)raw * REGS[i].factor;
-      Serial.print(val, 2);
+      Serial.print(val, 2);           // Imprimir con 2 decimales
     }
   }
 
-  Serial.println("}}");
-  delay(200);  // ~5 lecturas/segundo
+  Serial.println("}}");               // Cerrar JSON con salto de linea
+
+  delay(200);                         // Pausa: ~5 ciclos de lectura por segundo
 }
 ```
 
@@ -592,104 +672,195 @@ Lee JSON del ESP32 por serial y muestra en terminal (curses).
 
 ```python
 #!/usr/bin/env python3
-"""Dashboard ESP32 — lee JSON del ESP32-C3 por serial"""
+"""
+============================================================================
+Dashboard en terminal (curses) para ADA-FV — SRNE HF2430U80-H
+============================================================================
 
-import sys, time, json, curses, serial, serial.tools.list_ports
-from datetime import datetime
+PROPOSITO:
+  Leer el JSON que envia el ESP32-C3 por USB Serial y mostrarlo en la
+  terminal en tiempo real, organizado por grupos (panel, bateria, red, etc).
 
+ARQUITECTURA:
+  ESP32-C3 --(JSON por USB Serial)--> este script --> terminal curses
+
+USO:
+  python3 dashboardesp.py                  # auto-detecta el puerto
+  python3 dashboardesp.py /dev/ttyUSB0     # puerto explicito
+
+TECLAS:
+  Q  -> salir del dashboard
+
+NOTA:
+  Este script NO habla Modbus. Solo lee el JSON que el ESP32-C3 ya
+  proceso y envio escalado. Para hablar Modbus directo desde PC use
+  dashboard_srne.py o test_modbus_srne.py.
+============================================================================
+"""
+
+import sys          # Argumentos de linea de comandos
+import time         # Pausas y temporizacion
+import json         # Parsear el JSON que llega por serial
+import curses       # Interfaz de terminal en tiempo real
+import serial       # Comunicacion serial con el ESP32-C3
+import serial.tools.list_ports  # Deteccion automatica de puertos
+from datetime import datetime   # Marca de tiempo para la cabecera
+
+# ============================================================================
+# TABLA DE CAMPOS A MOSTRAR
+# ============================================================================
+# Cada entrada: (clave_json, nombre_visible, unidad, factor, signed, decimales)
+# El factor SIEMPRE es 1 porque el ESP32-C3 ya escala los valores.
+# El "signed" no se aplica: el ESP32 ya lo interpreto.
 FIELDS = [
-    ("SOC",       "SOC",        "%",     1,   False, 0),
-    ("Vbat",      "Vbat",       "V",     1,   False, 1),
-    ("Ibat",      "Ibat",       "A",     1,   True,  1),
-    ("PV1_V",     "PV1 V",      "V",     1,   False, 1),
-    ("PV1_I",     "PV1 I",      "A",     1,   False, 1),
-    ("PV1_P",     "PV1 P",      "W",     1,   False, 0),
-    ("PV_P",      "PV total P", "W",     1,   False, 0),
-    ("Carga",     "Carga",      "",      1,   False, 0),
-    ("Chg_P",     "Charge P",   "W",     1,   False, 0),
-    ("Estado",    "Estado",     "",      1,   False, 0),
-    ("Grid_V",    "Grid V",     "V",     1,   False, 1),
-    ("Grid_I",    "Grid I",     "A",     1,   False, 1),
-    ("Grid_Hz",   "Grid Hz",    "Hz",    1,   False, 2),
-    ("Inv_V",     "Inv V",      "V",     1,   False, 1),
-    ("Inv_I",     "Inv I",      "A",     1,   False, 1),
-    ("Inv_Hz",    "Inv Hz",     "Hz",    1,   False, 2),
-    ("Load_I",    "Load I",     "A",     1,   False, 1),
-    ("Load_P",    "Load P",     "W",     1,   False, 0),
-    ("Load_VA",   "Load VA",    "VA",    1,   False, 0),
-    ("T_DCDC",    "T DC-DC",    "C",     1,   True,  1),
-    ("T_DCAC",    "T DC-AC",    "C",     1,   True,  1),
-    ("T_Trafo",   "T Trafo",    "C",     1,   True,  1),
-    ("T_Amb",     "T Amb",      "C",     1,   True,  1),
-    ("PV_hoy",    "PV hoy",     "kWh",   1,   False, 1),
-    ("Load_hoy",  "Load hoy",   "kWh",   1,   False, 1),
+    ("SOC",       "SOC",        "%",     1,   False, 0),  # Estado de carga [%]
+    ("Vbat",      "Vbat",       "V",     1,   False, 1),  # Voltaje bateria [V]
+    ("Ibat",      "Ibat",       "A",     1,   True,  1),  # Corriente bateria [A]
+    ("PV1_V",     "PV1 V",      "V",     1,   False, 1),  # Voltaje panel [V]
+    ("PV1_I",     "PV1 I",      "A",     1,   False, 1),  # Corriente panel [A]
+    ("PV1_P",     "PV1 P",      "W",     1,   False, 0),  # Potencia panel [W]
+    ("PV_P",      "PV total P", "W",     1,   False, 0),  # Potencia PV total [W]
+    ("Carga",     "Carga",      "",      1,   False, 0),  # Estado de carga (codigo)
+    ("Chg_P",     "Charge P",   "W",     1,   False, 0),  # Potencia de carga [W]
+    ("Estado",    "Estado",     "",      1,   False, 0),  # Estado de maquina
+    ("Grid_V",    "Grid V",     "V",     1,   False, 1),  # Voltaje de red [V]
+    ("Grid_I",    "Grid I",     "A",     1,   False, 1),  # Corriente de red [A]
+    ("Grid_Hz",   "Grid Hz",    "Hz",    1,   False, 2),  # Frecuencia de red [Hz]
+    ("Inv_V",     "Inv V",      "V",     1,   False, 1),  # Voltaje inversor [V]
+    ("Inv_I",     "Inv I",      "A",     1,   False, 1),  # Corriente inversor [A]
+    ("Inv_Hz",    "Inv Hz",     "Hz",    1,   False, 2),  # Frecuencia inversor [Hz]
+    ("Load_I",    "Load I",     "A",     1,   False, 1),  # Corriente de carga [A]
+    ("Load_P",    "Load P",     "W",     1,   False, 0),  # Potencia activa [W]
+    ("Load_VA",   "Load VA",    "VA",    1,   False, 0),  # Potencia aparente [VA]
+    ("T_DCDC",    "T DC-DC",    "C",     1,   True,  1),  # Temp. DC-DC [C]
+    ("T_DCAC",    "T DC-AC",    "C",     1,   True,  1),  # Temp. DC-AC [C]
+    ("T_Trafo",   "T Trafo",    "C",     1,   True,  1),  # Temp. trafo [C]
+    ("T_Amb",     "T Amb",      "C",     1,   True,  1),  # Temp. ambiente [C]
+    ("PV_hoy",    "PV hoy",     "kWh",   1,   False, 1),  # Energia PV de hoy [kWh]
+    ("Load_hoy",  "Load hoy",   "kWh",   1,   False, 1),  # Energia consumida hoy [kWh]
 ]
 
-KEYNAME = {f[0]: f[1] for f in FIELDS}
-KEYUNIT = {f[0]: f[2] for f in FIELDS}
-KEYDEC  = {f[0]: f[5] for f in FIELDS}
+# Diccionarios de acceso rapido por clave JSON
+KEYNAME = {f[0]: f[1] for f in FIELDS}   # clave -> nombre visible
+KEYUNIT = {f[0]: f[2] for f in FIELDS}   # clave -> unidad
+KEYDEC  = {f[0]: f[5] for f in FIELDS}   # clave -> cantidad de decimales
 
-ESTADOS = {0:"Power-on",1:"Standby",2:"Init",3:"SoftStart",4:"AC op",
-           5:"Inverter op",6:"Inv->AC",7:"AC->Inv",8:"Bat activ",9:"Off",10:"Fault"}
-CARGAS  = {0:"Off",1:"Quick",2:"ConstV",4:"Float",6:"Li activ",8:"Full"}
+# ============================================================================
+# TABLAS DE DECODIFICACION DE CODIGOS
+# ============================================================================
+# Estado de la maquina (registro 0x0210 / campo "Estado")
+ESTADOS = {0:"Power-on", 1:"Standby", 2:"Init", 3:"SoftStart",
+           4:"AC op", 5:"Inverter op", 6:"Inv->AC", 7:"AC->Inv",
+           8:"Bat activ", 9:"Manual off", 10:"Fault"}
+# Estado de carga (registro 0x010B / campo "Carga")
+CARGAS = {0:"Off", 1:"Quick", 2:"ConstV", 4:"Float", 6:"Li activ", 8:"Full"}
 
+# ============================================================================
+# FORMATEO DE UNA LINEA DEL DASHBOARD
+# ============================================================================
 def formatear(key, raw):
+    """Convierte el valor crudo del JSON en texto listo para mostrar.
+
+    Parametros:
+        key : clave del campo en el JSON (ej: "Vbat")
+        raw : valor numerico recibido (o None si el ESP32 no respondio)
+    Retorna:
+        string con el texto formateado, ej: "      Vbat: 27.9 V"
+    """
     if raw is None:
+        # El ESP32 no obtuvo respuesta del inversor para este campo
         return f"{KEYNAME[key]:>10s}: ---"
-    dec = KEYDEC.get(key, 1)
-    v = float(raw)
+
+    dec = KEYDEC.get(key, 1)            # Decimales para este campo
+    v = float(raw)                      # Valor ya escalado por el ESP32
     fmt = f"{KEYNAME[key]:>10s}: {v:.{dec}f} {KEYUNIT.get(key,'')}"
-    if key == "Estado" and raw in ESTADOS: fmt += f"  ({ESTADOS[int(raw)]})"
-    if key == "Carga" and raw in CARGAS:  fmt += f"  ({CARGAS[int(raw)]})"
+
+    # Anadir descripcion textual para los campos de codigo
+    if key == "Estado" and raw in ESTADOS:
+        fmt += f"  ({ESTADOS[int(raw)]})"
+    if key == "Carga" and raw in CARGAS:
+        fmt += f"  ({CARGAS[int(raw)]})"
     if key == "Ibat" and raw is not None:
+        # Convencion SRNE: positivo = descarga, negativo = carga
         sentido = "Desc" if float(raw) > 0 else "Carga"
         fmt += f" ({sentido})"
     return fmt
 
+# ============================================================================
+# DETECCION AUTOMATICA DE PUERTO SERIAL
+# ============================================================================
 def detect_port():
+    """Busca un puerto serial disponible (ESP32-C3 conectado por USB)."""
+    # Primera pasada: preferir puertos con nombre sugerente
     for p in serial.tools.list_ports.comports():
         if any(kw in p.description.lower() for kw in ["usb","serial","ch340","cp210","ftdi","uart"]):
             return p.device
+    # Segunda pasada: usar el primer puerto que exista
     for p in serial.tools.list_ports.comports():
         return p.device
-    return None
+    return None                        # No se encontro ningun puerto
 
+# ============================================================================
+# BUCLE PRINCIPAL DEL DASHBOARD (curses)
+# ============================================================================
 def dashboard(stdscr, port):
-    curses.curs_set(0)
-    curses.use_default_colors()
-    stdscr.nodelay(1)
-    stdscr.timeout(2000)
+    """Dibuja el dashboard en tiempo real usando curses.
 
-    ser = serial.Serial(port, 115200, timeout=5)
-    ser.reset_input_buffer()
+    Parametros:
+        stdscr : objeto de pantalla que provee curses.wrapper
+        port   : ruta del puerto serial (ej: /dev/ttyUSB0)
+    """
+    # --- Configuracion de curses ---
+    curses.curs_set(0)                  # Ocultar el cursor
+    curses.use_default_colors()         # Usar colores por defecto del terminal
+    stdscr.nodelay(1)                   # getch() sin bloqueo
+    stdscr.timeout(2000)                # Timeout de espera de teclado (2s)
 
-    samples = {}
-    blink = False
+    # --- Abrir el puerto serial hacia el ESP32-C3 ---
+    try:
+        ser = serial.Serial(port, 115200, timeout=5)  # 115200 baud
+        ser.reset_input_buffer()        # Limpiar datos viejos del buffer
+    except Exception as e:
+        stdscr.addstr(0, 0, f"ERROR: {e}")
+        stdscr.refresh()
+        time.sleep(3)
+        return
+
+    samples = {}                        # Ultimo muestreo recibido (dict)
+    blink = False                       # Estado del indicador [X] / [ ]
+
     while True:
-        stdscr.erase()
-        h, w = stdscr.getmaxyx()
+        stdscr.erase()                  # Limpiar pantalla
+        h, w = stdscr.getmaxyx()        # Tamano actual de la terminal
 
+        # --- Leer lineas JSON del ESP32 (hasta 5 por refresco) ---
         new_data = False
         for _ in range(5):
             try:
                 line = ser.readline().decode(errors="replace").strip()
                 if not line: continue
-                data = json.loads(line)
-                if data.get("t") == "data":
+                data = json.loads(line)         # Parsear el JSON
+                if data.get("t") == "data":     # Solo tramas de datos
                     samples = data.get("samples", {})
                     new_data = True
-            except: pass
+            except: pass                        # Ignorar lineas corruptas
 
-        if new_data: blink = not blink
+        # Parpadear el indicador si llego un dato nuevo
+        if new_data:
+            blink = not blink
+
+        # Marca de tiempo de la cabecera
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        F = curses.A_BOLD
-        led = "[X]" if blink else "[ ]"
+        # --- Cabecera ---
+        F = curses.A_BOLD               # Atributo negrita
+        led = "[X]" if blink else "[ ]" # Indicador de datos recibidos
         stdscr.addstr(0, 0, "=" * min(w-1, 70), F)
         stdscr.addstr(1, 0, f"  {led}  ADA-FV - SRNE HF2430U80-H    {now}", F)
         stdscr.addstr(2, 0, f"  Puerto: {port}  |  via ESP32-C3", F)
         stdscr.addstr(3, 0, "=" * min(w-1, 70), F)
 
+        # --- Definicion de los grupos de datos a mostrar ---
         grupos = [
             ("PANEL SOLAR",   ["PV1_V","PV1_I","PV1_P","PV_P"]),
             ("BATERIA",       ["SOC","Vbat","Ibat","Carga"]),
@@ -700,9 +871,10 @@ def dashboard(stdscr, port):
             ("ENERGIA HOY",   ["PV_hoy","Load_hoy"]),
         ]
 
-        line = 5
+        # --- Dibujar cada grupo y sus campos ---
+        line = 5                        # Fila inicial (despues de la cabecera)
         for titulo, keys in grupos:
-            if line >= h-2: break
+            if line >= h-2: break       # No salirse de la pantalla
             stdscr.addstr(line, 0, f"-- {titulo} --", F)
             line += 1
             for key in keys:
@@ -710,24 +882,33 @@ def dashboard(stdscr, port):
                 txt = formatear(key, samples.get(key))
                 stdscr.addstr(line, 0, txt)
                 line += 1
-            line += 1
+            line += 1                   # Fila en blanco entre grupos
 
+        # --- Pie de pagina ---
         if line < h-1:
             stdscr.addstr(line, 0, "=" * min(w-1, 70))
             stdscr.addstr(line+1, 0, "  Q=salir  |  actualiza cada ~500ms")
-        stdscr.refresh()
 
+        stdscr.refresh()                # Volcar cambios a la terminal
+
+        # --- Esperar tecla Q para salir (20 x 100ms = 2s) ---
         for _ in range(20):
             k = stdscr.getch()
             if k in (ord('q'), ord('Q')):
-                ser.close(); return
+                ser.close()             # Cerrar puerto serial
+                return
             time.sleep(0.1)
 
+# ============================================================================
+# PUNTO DE ENTRADA
+# ============================================================================
 def main():
+    """Punto de entrada: detecta el puerto y lanza el dashboard curses."""
     port = sys.argv[1] if len(sys.argv) > 1 else detect_port()
     if not port:
         print("ERROR: No se detecto puerto.")
         sys.exit(1)
+    # curses.wrapper se encarga de inicializar/restaurar la terminal
     curses.wrapper(dashboard, port)
 
 if __name__ == "__main__":
@@ -746,90 +927,184 @@ Lee JSON del ESP32 por serial y sirve pagina web en `http://localhost:8080`.
 
 ```python
 #!/usr/bin/env python3
-import sys, json, threading, serial, serial.tools.list_ports
-from http.server import HTTPServer, BaseHTTPRequestHandler
+"""
+============================================================================
+Servidor web local para ADA-FV — SRNE HF2430U80-H via ESP32-C3
+============================================================================
 
-latest_json = "{}"
-port = None
+PROPOSITO:
+  Leer el JSON del ESP32-C3 por USB Serial y servirlo en un navegador web
+  con una pagina sencilla de fondo blanco y texto grande.
 
+ARQUITECTURA:
+  ESP32-C3 --(JSON USB Serial)--> servidor (localhost:8080) --> navegador
+
+USO:
+  python3 serverweb_srne.py                  # auto-detecta el puerto
+  python3 serverweb_srne.py /dev/ttyUSB0     # puerto explicito
+
+ABRIR EN EL NAVEGADOR:
+  http://localhost:8080
+
+SALIR:
+  Ctrl+C
+============================================================================
+"""
+
+import json         # Parsear el JSON del ESP32
+import threading    # Hilo lector en segundo plano
+import time         # Control del ciclo de actualizacion
+import argparse     # Opciones de linea de comandos
+from http.server import BaseHTTPRequestHandler, HTTPServer  # Servidor HTTP
+import serial       # Comunicacion serial con el ESP32-C3
+import serial.tools.list_ports  # Deteccion automatica de puertos
+
+# Configuracion del servidor HTTP
+HOST = "127.0.0.1"      # Solo acceso local (no exponer a la red)
+PORT = 8080             # Puerto del servidor web
+TAMANIO_TEXTO = "5vw"   # Tamano de letra de la pagina web
+
+# Estado global compartido entre el hilo lector y el servidor
+samples = {}            # Ultima muestra de datos recibida del ESP32
+lock = threading.Lock() # Protege el acceso a "samples" entre hilos
+
+# ============================================================================
+# HILO LECTOR DEL ESP32 (corre en segundo plano)
+# ============================================================================
+def hilo_lector(port):
+    """Lee el JSON del ESP32-C3 y actualiza la variable global 'samples'.
+
+    Parametros:
+        port : ruta del puerto serial (ej: /dev/ttyUSB0)
+    Este hilo corre hasta que el programa se detenga.
+    """
+    global samples
+    ser = serial.Serial(port, 115200, timeout=2)   # Conectar al ESP32
+    print(f"Leyendo ESP32 en {port} @115200 baud...")
+
+    while True:
+        try:
+            line = ser.readline().decode(errors="replace").strip()
+            if not line:
+                continue
+            data = json.loads(line)                # Parsear JSON
+            if data.get("t") == "data":            # Solo tramas de datos
+                with lock:                         # Proteger acceso
+                    samples = data.get("samples", {})
+        except serial.SerialException:
+            time.sleep(1)                          # Reconectar mas tarde
+            try:
+                ser = serial.Serial(port, 115200, timeout=2)
+            except:
+                pass
+        except:
+            pass                                   # Ignorar errores menores
+
+# ============================================================================
+# MANEJADOR DE PETICIONES HTTP
+# ============================================================================
+class Manejador(BaseHTTPRequestHandler):
+    """Atiende las peticiones del navegador.
+
+    - GET /      -> pagina HTML con los datos en vivo
+    - GET /api   -> respuesta JSON para que la pagina la consulte
+    """
+
+    def log_message(self, *a):
+        pass  # Silenciar el log de peticiones de la consola
+
+    def do_GET(self):
+        # --- Endpoint /api: devuelve los ultimos datos como JSON ---
+        if self.path == "/api":
+            with lock:
+                payload = samples   # Copia segura bajo el lock
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        # --- Pagina HTML principal (cualquier otra ruta) ---
+        html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ADA-FV - SRNE HF2430U80-H</title>
+<style>
+  body {{ background: #fff; font-family: monospace; text-align: center; }}
+  h1 {{ font-size: {TAMANIO_TEXTO}; }}
+  div {{ font-size: {TAMANIO_TEXTO}; }}
+</style>
+</head>
+<body>
+<h1>ADA-FV - SRNE HF2430U80-H</h1>
+<div id="datos">Esperando datos...</div>
+<script>
+  // Consulta el endpoint /api cada 2 segundos y actualiza la pagina
+  async function refresh() {{
+    const r = await fetch('/api');
+    const d = await r.json();
+    const c = (k, u) => d[k] !== undefined ? d[k] + ' ' + u : '---';
+    document.getElementById('datos').innerHTML =
+      'SOC: ' + c('SOC','%') + ' &nbsp; Vbat: ' + c('Vbat','V') +
+      ' &nbsp; PV: ' + c('PV_P','W') + ' &nbsp; Carga: ' + c('Load_P','W') +
+      '<br><br>' + new Date().toLocaleTimeString();
+  }}
+  refresh();
+  setInterval(refresh, 2000);   // Actualizar cada 2 segundos
+</script>
+</body>
+</html>"""
+        body = html.encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+# ============================================================================
+# DETECCION AUTOMATICA DE PUERTO SERIAL
+# ============================================================================
 def detect_port():
+    """Busca un puerto serial disponible (ESP32-C3 conectado por USB)."""
     for p in serial.tools.list_ports.comports():
         if any(kw in p.description.lower() for kw in ["usb","serial","ch340","cp210","ftdi","uart"]):
             return p.device
-    for p in serial.tools.list_ports.comports(): return p.device
+    for p in serial.tools.list_ports.comports():
+        return p.device
     return None
 
-def reader_thread():
-    global latest_json
-    ser = serial.Serial(port, 115200, timeout=5)
-    ser.reset_input_buffer()
-    while True:
-        line = ser.readline().decode(errors="replace").strip()
-        if not line: continue
-        data = json.loads(line)
-        if data.get("t") == "data": latest_json = line
-
-HTML = """<!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ADA-FV - SRNE HF2430U80-H</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#fff;color:#000;font-family:Arial,sans-serif;padding:30px}
-  h1{font-size:3em} #hora{font-size:1.8em;margin:10px 0 25px;color:#333}
-  .g{display:inline-block;vertical-align:top;margin:10px 30px 10px 0;min-width:250px}
-  .gt{font-size:1.6em;font-weight:bold;border-bottom:3px solid #000;margin-bottom:10px;padding-bottom:5px}
-  .r{font-size:1.8em;padding:6px 0} .rn{color:#555} .rv{font-weight:bold}
-  #led{display:inline-block;width:20px;height:20px;border-radius:50%;margin-right:12px}
-  .on{background:#00cc00} .off{background:#ddd}
-</style></head><body>
-<div style="display:flex;align-items:center;gap:10px"><div id="led" class="off"></div><h1>ADA-FV - SRNE HF2430U80-H</h1></div>
-<div id="hora">conectando...</div><div id="datos"></div>
-<script>
-const g=[['PANEL SOLAR',['PV1_V','PV1_I','PV1_P','PV_P']],['BATERIA',['SOC','Vbat','Ibat','Carga']],['CARGA AC',['Inv_V','Inv_I','Load_I','Load_P','Load_VA']],['RED',['Grid_V','Grid_I','Grid_Hz']],['TEMP',['T_DCDC','T_DCAC','T_Trafo','T_Amb']],['ESTADO',['Estado']],['ENERGIA',['PV_hoy','Load_hoy']]];
-const n={'SOC':'SOC','Vbat':'Vbat','Ibat':'Ibat','PV1_V':'PV1 V','PV1_I':'PV1 I','PV1_P':'PV1 P','PV_P':'PV tot','Carga':'Carga','Estado':'Estado','Grid_V':'Red V','Grid_I':'Red I','Grid_Hz':'Red Hz','Inv_V':'Inv V','Inv_I':'Inv I','Inv_Hz':'Inv Hz','Load_I':'Load I','Load_P':'Load P','Load_VA':'Load VA','T_DCDC':'DC-DC','T_DCAC':'DC-AC','T_Trafo':'Trafo','T_Amb':'Amb','PV_hoy':'PV hoy','Load_hoy':'Load hoy'};
-const u={'SOC':'%','Vbat':'V','Ibat':'A','PV1_V':'V','PV1_I':'A','PV1_P':'W','PV_P':'W','Carga':'','Estado':'','Grid_V':'V','Grid_I':'A','Grid_Hz':'Hz','Inv_V':'V','Inv_I':'A','Inv_Hz':'Hz','Load_I':'A','Load_P':'W','Load_VA':'VA','T_DCDC':'C','T_DCAC':'C','T_Trafo':'C','T_Amb':'C','PV_hoy':'kWh','Load_hoy':'kWh'};
-const e={0:'Power-on',1:'Standby',2:'Init',3:'SoftStart',4:'AC op',5:'Inv op',6:'Inv->AC',7:'AC->Inv',8:'Bat activ',9:'Off',10:'Fault'};
-const c={0:'Off',1:'Quick',2:'ConstV',4:'Float',6:'Li activ',8:'Full'};
-async function f(){try{
-  const r=await fetch('/api');const d=await r.json();if(d.t!='data')return;
-  const s=d.samples;document.getElementById('led').className='on';
-  setTimeout(()=>document.getElementById('led').className='off',200);
-  document.getElementById('hora').textContent=new Date().toLocaleTimeString()+' | ms='+d.ms;
-  let h='';for(const[t,ks]of g){h+='<div class="g"><div class="gt">'+t+'</div>';
-  for(const k of ks){let v=s[k];let x=v!==null&&v!==undefined?v:'---';let x2='';
-  if(k=='Estado'&&v!==null&&v in e)x2=' '+e[v];if(k=='Carga'&&v!==null&&v in c)x2=' '+c[v];
-  if(k=='Ibat'&&v!==null)x2=v>0?' (DESC)':' (CARG)';
-  h+='<div class="r"><span class="rn">'+(n[k]||k)+':</span> <span class="rv">'+x+'</span> '+(u[k]||'')+x2+'</div>';}
-  h+='</div>';}document.getElementById('datos').innerHTML=h;
-}catch(e){}}
-setInterval(f,2000);f();
-</script></body></html>"""
-
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/api":
-            self.send_response(200)
-            self.send_header("Content-Type","application/json")
-            self.send_header("Access-Control-Allow-Origin","*")
-            self.end_headers()
-            self.wfile.write(latest_json.encode())
-        else:
-            self.send_response(200)
-            self.send_header("Content-Type","text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(HTML.encode())
-    def log_message(self,*a): pass
-
+# ============================================================================
+# PUNTO DE ENTRADA
+# ============================================================================
 def main():
-    global port
-    port = sys.argv[1] if len(sys.argv) > 1 else detect_port()
-    if not port: print("ERROR: No se detecto puerto."); sys.exit(1)
-    threading.Thread(target=reader_thread, daemon=True).start()
-    print(f"Servidor en http://localhost:8080")
-    print(f"Datos desde {port}")
-    HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+    """Punto de entrada: arranca el hilo lector y el servidor web."""
+    ap = argparse.ArgumentParser(description="Servidor web de ADA-FV")
+    ap.add_argument("port_serial", nargs="?", default=None,
+                    help="Puerto serial del ESP32 (auto-detecta si se omite)")
+    args = ap.parse_args()
 
-if __name__ == "__main__": main()
+    # Determinar el puerto serial
+    port = args.port_serial or detect_port()
+    if not port:
+        print("ERROR: No se detecto puerto serial.")
+        return
+
+    # Arrancar el hilo lector en segundo plano (daemon: muere con el main)
+    t = threading.Thread(target=hilo_lector, args=(port,), daemon=True)
+    t.start()
+
+    # Arrancar el servidor web
+    print(f"Servidor web en http://{HOST}:{PORT}")
+    try:
+        HTTPServer((HOST, PORT), Manejador).serve_forever()
+    except KeyboardInterrupt:
+        print("\nServidor detenido.")
+
+if __name__ == "__main__":
+    main()
 ```
 
 **Uso:**
