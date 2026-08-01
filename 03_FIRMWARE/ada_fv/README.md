@@ -36,4 +36,4 @@ debug_serial.py).
 ## Referencias
 
 - `esphome_reference/` — Configuraciones ESPhome de referencia para inversores SRNE
-- `include/`, `lib/`, `src/` — Estructura base del proyecto PlatformIO
+- `platformio.ini` — Proyecto PlatformIO (board ESP32-C3 DevKitC-02, framework Arduino)

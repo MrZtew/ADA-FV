@@ -10,6 +10,7 @@ Proyecto de grado ADA-FV (Arquitectura de Datos para Aulas Fotovoltaicas) — Au
 ```
 Proyecto_ADA-FV/
 ├── README.md                        ← Portada del repositorio
+├── INDEX.md                         ← Indice y esquema de espejo
 ├── 00_DOCUMENTACION_PRINCIPAL/      ← Manual técnico (anteproyecto/informe cuando existan)
 │   └── Manual_Tecnico_ADA-FV.md     ← MANUAL COMPLETO (este documento)
 ├── 01_INVESTIGACION_Y_BASE_CONOCIMIENTO/
@@ -405,9 +406,17 @@ void loop() {
 
 ### Compilacion y subida
 
-1. Arduino IDE → Tools → Board → **ESP32-C3 Dev Module**
+Con **Arduino IDE**:
+
+1. Tools → Board → **ESP32-C3 Dev Module**
 2. Tools → Port → seleccionar ESP32-C3
 3. Abrir `esp32c3_srne_modbus.ino`, click Upload
+
+Con **PlatformIO** (board `esp32-c3-devkitc-02`, framework Arduino — ver `platformio.ini`):
+
+```bash
+cd 03_FIRMWARE/ada_fv && pio run -t upload
+```
 
 ---
 

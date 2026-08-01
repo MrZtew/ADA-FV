@@ -40,7 +40,7 @@ Scripts en `04_SOFTWARE_PC/`:
 ## Requisitos mínimos
 
 - KiCad (esquemáticos y PCB)
-- PlatformIO + ESP-IDF (firmware)
+- PlatformIO + Arduino (firmware ESP32-C3)
 - Python 3.x + dependencias (software PC): `pymodbus`, `pyserial`
 
 ## Créditos
