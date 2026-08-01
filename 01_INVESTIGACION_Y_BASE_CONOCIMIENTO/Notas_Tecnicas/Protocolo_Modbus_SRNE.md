@@ -50,4 +50,4 @@ Protocolo: SRNE Solar MODBUS Protocol for Energy Storage Inverter V2.08
 - Usar `force_new_range: true` para evitar errores de comunicación Modbus
 - El inversor es de tipo "Hybrid Inverter" (código 04 en MachType)
 - La integración de referencia usa ESPhome + Home Assistant, pero el protocolo Modbus RTU subyacente es el mismo para cualquier implementación (ESP-IDF, Arduino, etc.)
-- Los archivos de referencia de ESPhome están en `include/full/` del repositorio clonado
+- Los archivos de referencia de ESPhome están en `include/full/` de [phinix-org/SRNE-inverters-by-modbus-rs485](https://github.com/phinix-org/SRNE-inverters-by-modbus-rs485)

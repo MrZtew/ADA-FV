@@ -192,7 +192,7 @@ Tabla de códigos de falla en `Referencias_Bibliograficas/MODBUS Protocol for En
 
 ## Archivos ESPhome de referencia
 
-Disponibles en el repositorio clonado (`/tmp/srne-modbus/include/`):
+Disponibles en `include/` del repositorio [phinix-org/SRNE-inverters-by-modbus-rs485](https://github.com/phinix-org/SRNE-inverters-by-modbus-rs485):
 
 | Archivo | Contenido |
 |---------|-----------|
