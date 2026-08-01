@@ -8,13 +8,13 @@
   MachType                                      4    (All-in-one solar charger inverter)
   AfciFirmwareVersion                           0  
   AfciAlgorithmVersion                          0  
-  SoftWareVersion(APP)                       6.76    (V676.00)
-  BootloaderVersion                          2.03    (V203.00)
-  HardWareVersion(Control)                   2.00    (V200.00)
-  HardWareVersion(Power)                     0.00    (V0.00)
+  SoftWareVersion(APP)                        676    (V6.76)
+  BootloaderVersion                           203    (V2.03)
+  HardWareVersion(Control)                    200    (V2.00)
+  HardWareVersion(Power)                        0    (V0.00)
   Rs485Addr                                     1  
   MachModelNum2                                23  
-  RS485ProtocolVersion                        107    (V0.107)
+  RS485ProtocolVersion                        107    (V1.07)
   ProductAreaCode                               0    (Shenzhen)
 
 ─── P01 — DC Data: Bateria (SOC, Voltaje, Corriente, Temperatura) ───
