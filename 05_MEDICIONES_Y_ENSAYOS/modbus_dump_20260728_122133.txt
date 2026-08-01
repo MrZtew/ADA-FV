@@ -20,7 +20,7 @@
 ─── P01 — DC Data: Bateria (SOC, Voltaje, Corriente, Temperatura) ───
   BatSoc                                      100 %
   BatVolt                                    27.9 V
-  ChargeCurr                                 -0.1 A  (Desc (65535.0A))
+  ChargeCurr                                 -0.1 A
   DeviceBatTemper                             0.0 °C
 
 ─── P01 — DC Data: Paneles PV (V, I, P) ───
