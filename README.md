@@ -12,7 +12,7 @@ Repositorio del proyecto de grado para el diseño e implementación de un sistem
 ## Estructura del repositorio
 
 - `00_DOCUMENTACION_PRINCIPAL/` — Anteproyecto, informe final, manual técnico y presentaciones
-- `01_INVESTIGACION_Y_BASE_CONOCIMIENTO/` — Datasheets, notas técnicas, referencias y normas
+- `01_INVESTIGACION_Y_BASE_CONOCIMIENTO/` — Datasheets, notas técnicas y referencias
 - `02_DISENO_HARDWARE/` — Esquemáticos, PCB, simulaciones e imágenes
 - `03_FIRMWARE/` — Código fuente del ESP32-C3 (`ada_fv/esp32c3_srne_modbus.ino`)
 - `04_SOFTWARE_PC/` — Scripts Python para monitorización y prueba Modbus
